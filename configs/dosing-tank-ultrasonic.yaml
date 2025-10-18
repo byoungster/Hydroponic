@@ -1,3 +1,14 @@
+# Hardware Bill of Materials (BOM):
+# - PWM DC5V Ultrasonic ranging Sensor ultrasonic Waterproof Distance sensors
+#   Waterproof Probe PWM ultrasonic Sensor Module (Amazon ~$20)
+# - 10pcs WeMos D1 Mini V4.0.0 Type-C USB WiFi Internet of Things Board
+#   Based ESP8266 4MB Compatible with Arduino MicroPython Nodemcu (Amazon ~$26 for 10pcs)
+# - ELEGOO 120pcs Multicolored Dupont Wire 40pin Male to Female, 40pin Male to Male,
+#   40pin Female to Female Breadboard Jumper Ribbon Cables Kit (Amazon ~$7)
+#
+# Total cost per sensor: ~$22 ($20 sensor + ~$2.60 per D1 Mini)
+# Jumper cables are reusable across projects
+
 esp8266:
   board: d1_mini
 
