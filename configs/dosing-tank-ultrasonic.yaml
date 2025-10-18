@@ -1,0 +1,100 @@
+esp8266:
+  board: d1_mini
+
+esphome:
+  name: dosing-tank-ultrasonic
+  friendly_name: Dosing Tank Ultrasonic
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid_iot
+  password: !secret wifi_password_iot
+  fast_connect: True
+
+captive_portal:
+
+# Example configuration entry
+sensor:
+  - platform: ultrasonic
+    id: distance
+    trigger_pin: D1
+    echo_pin: D2
+    update_interval: 1s
+    pulse_time: 10us
+    timeout: 6m
+    filters:
+      # Clamp filter - constrains values to expected physical range (meters)
+      # Tank range: 0.12m (empty, 4.7in) to 0.37m (full, 14.5in)
+      - clamp:
+          min_value: 0.12
+          max_value: 0.37
+          ignore_out_of_range: true
+
+      # Smart outlier rejection - rejects readings >30% different from last valid value
+      # Prevents sensor spikes from reaching downstream calculations
+      - lambda: |-
+          static float last_valid = NAN;
+
+          if (isnan(last_valid)) {
+            // First run: accept the value
+            last_valid = x;
+            return x;
+          } else {
+            // Check if reading is within 30% of last valid value
+            float percent_diff = fabs(x - last_valid) / last_valid * 100.0;
+            if (percent_diff <= 30.0) {
+              last_valid = x;
+              return x;
+            }
+          }
+
+          return last_valid;  // Return last valid value if outlier detected
+
+  # Convert meters to inches
+  - platform: template
+    name: "distance_inches"
+    unit_of_measurement: "in"
+    lambda: |-
+      return (id(distance).state) * 39.3701;
+    update_interval: 1s
+
+  # Calculate gallons based on distance
+  # Calibration points: 13.5in = empty (0 gal), 5.2in = full (10 gal)
+  - platform: template
+    name: "water_level_gallons"
+    id: water_level_gallons
+    unit_of_measurement: "gal"
+    accuracy_decimals: 1
+    lambda: |-
+      return id(distance).state * 39.3701;
+    filters:
+      - calibrate_linear:
+          - 13.5 -> 0    # Empty tank
+          - 5.2 -> 10    # 10 gallons
+    update_interval: 1s
+
+  # Calculate percentage full (0-100%)
+  - platform: template
+    name: "water_level_percent"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    lambda: |-
+      float gallons = id(water_level_gallons).state;
+      return (gallons / 20.0) * 100.0;
+    filters:
+      # Clamp percentage to valid range
+      - clamp:
+          min_value: 0
+          max_value: 100
+    update_interval: 1s
