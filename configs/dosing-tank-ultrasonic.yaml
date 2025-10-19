@@ -32,21 +32,21 @@
 # Ultrasonic Sensor to D1 Mini:
 #   - Sensor VCC    -> D1 Mini 5V
 #   - Sensor GND    -> D1 Mini GND
-#   - Sensor TRIG   -> D1 Mini D5 (GPIO14)
-#   - Sensor ECHO   -> D1 Mini D6 (GPIO12)
+#   - Sensor TRIG   -> D1 Mini D3 (GPIO0)
+#   - Sensor ECHO   -> D1 Mini D4 (GPIO2)
 #
 # OLED Display to D1 Mini (I2C):
-#   - OLED VCC      -> D1 Mini 3.3V
+#   - OLED VCC      -> D1 Mini 5V
 #   - OLED GND      -> D1 Mini GND
-#   - OLED SDA      -> D1 Mini D3 (GPIO0)
-#   - OLED SCL      -> D1 Mini D4 (GPIO2)
+#   - OLED SDA      -> D1 Mini D2 (GPIO4)
+#   - OLED SCL      -> D1 Mini D1 (GPIO5)
 #
 # Tank Configuration:
 # -------------------
 # Physical Tank: 27 gallon capacity
-# Monitored Range: 0-20 gallons (20 gal = 100% full)
-# Empty Reading: 13.5 inches from sensor
-# Full Reading: 5.2 inches from sensor
+# Monitored Range: 0-20 gallons (max fill stops at 20 gal, leaving 7 gal headspace at top)
+# Empty (0 gal) Reading: 13.5 inches from sensor
+# Half Full (10 gal) Reading: 5.2 inches from sensor
 #
 # Features:
 # ---------
@@ -87,8 +87,8 @@ captive_portal:
 
 # I2C configuration for the OLED display
 i2c:
-  sda: D3
-  scl: D4
+  sda: D2
+  scl: D1
   frequency: 400kHz
   scan: true
   id: bus_a
@@ -150,8 +150,8 @@ sensor:
   - platform: ultrasonic
     #name: "Ultrasonic Sensor"
     id: distance
-    trigger_pin: D5
-    echo_pin: D6
+    trigger_pin: D3
+    echo_pin: D4
     update_interval: 1s
     pulse_time: 10us
     timeout: 6m
