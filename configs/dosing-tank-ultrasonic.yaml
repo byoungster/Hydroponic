@@ -1,13 +1,63 @@
-# Hardware Bill of Materials (BOM):
-# - PWM DC5V Ultrasonic ranging Sensor ultrasonic Waterproof Distance sensors
-#   Waterproof Probe PWM ultrasonic Sensor Module (Amazon ~$20)
-# - 10pcs WeMos D1 Mini V4.0.0 Type-C USB WiFi Internet of Things Board
-#   Based ESP8266 4MB Compatible with Arduino MicroPython Nodemcu (Amazon ~$26 for 10pcs)
-# - ELEGOO 120pcs Multicolored Dupont Wire 40pin Male to Female, 40pin Male to Male,
-#   40pin Female to Female Breadboard Jumper Ribbon Cables Kit (Amazon ~$7)
+# ============================================================================
+# ESPHome Dosing Tank Water Level Monitor with OLED Display
+# ============================================================================
 #
-# Total cost per sensor: ~$22 ($20 sensor + ~$2.60 per D1 Mini)
-# Jumper cables are reusable across projects
+# This configuration monitors water levels in a hydroponic dosing tank using
+# an ultrasonic sensor and displays the information on a local OLED screen
+# and in Home Assistant.
+#
+# Hardware Bill of Materials (BOM):
+# ---------------------------------
+# 1. Ultrasonic Sensor: PWM DC5V Ultrasonic ranging Sensor ultrasonic
+#    Waterproof Distance sensors Waterproof Probe PWM ultrasonic Sensor Module
+#    Price: ~$20 (Amazon)
+#
+# 2. Microcontroller: WeMos D1 Mini V4.0.0 Type-C USB WiFi IoT Board
+#    Based ESP8266 4MB Compatible with Arduino MicroPython Nodemcu
+#    Price: ~$26 for 10pcs (~$2.60 each) (Amazon)
+#
+# 3. OLED Display: Dorhea 6PCS 0.96" OLED Display Module 12864 128x64 Pixel
+#    LCD Yellow Blue SSD1306 Driver Board I2C Serial (Amazon ASIN: B07WPCPM5H)
+#    Price: ~$18 for 6pcs (~$3 each) (Amazon)
+#
+# 4. Jumper Cables: ELEGOO 120pcs Multicolored Dupont Wire 40pin Male to Female,
+#    40pin Male to Male, 40pin Female to Female Breadboard Jumper Ribbon Cables Kit
+#    Price: ~$7 (reusable across projects) (Amazon)
+#
+# Total cost per complete sensor unit: ~$26 ($20 sensor + $2.60 D1 Mini + $3 OLED)
+# Note: Jumper cables are reusable across multiple projects
+#
+# Wiring Connections:
+# -------------------
+# Ultrasonic Sensor to D1 Mini:
+#   - Sensor VCC    -> D1 Mini 5V
+#   - Sensor GND    -> D1 Mini GND
+#   - Sensor TRIG   -> D1 Mini D5 (GPIO14)
+#   - Sensor ECHO   -> D1 Mini D6 (GPIO12)
+#
+# OLED Display to D1 Mini (I2C):
+#   - OLED VCC      -> D1 Mini 3.3V
+#   - OLED GND      -> D1 Mini GND
+#   - OLED SDA      -> D1 Mini D3 (GPIO0)
+#   - OLED SCL      -> D1 Mini D4 (GPIO2)
+#
+# Tank Configuration:
+# -------------------
+# Physical Tank: 27 gallon capacity
+# Monitored Range: 0-20 gallons (20 gal = 100% full)
+# Empty Reading: 13.5 inches from sensor
+# Full Reading: 5.2 inches from sensor
+#
+# Features:
+# ---------
+# - Real-time water level monitoring via ultrasonic sensor
+# - Local OLED display showing gallons, percentage, and visual bar
+# - Home Assistant integration via API
+# - Smart outlier rejection (filters sensor noise)
+# - OTA (Over-The-Air) updates
+# - WiFi connectivity
+#
+# ============================================================================
 
 esp8266:
   board: d1_mini
@@ -35,25 +85,83 @@ wifi:
 
 captive_portal:
 
-# Example configuration entry
+# I2C configuration for the OLED display
+i2c:
+  sda: D3
+  scl: D4
+  frequency: 400kHz
+  scan: true
+  id: bus_a
+
+# Define fonts for the display
+font:
+  - file: "gfonts://Roboto"
+    id: roboto_small
+    size: 10
+  - file: "gfonts://Roboto"
+    id: roboto_medium
+    size: 14
+  - file: "gfonts://Roboto"
+    id: roboto_large
+    size: 20
+
+# Define colors for the display
+color:
+  - id: white_color
+    red: 100%
+    green: 100%
+    blue: 100%
+
+# SSD1306 I2C OLED Display
+display:
+  - platform: ssd1306_i2c
+    model: "SSD1306 128x64"
+    reset_pin: D0
+    address: 0x3C
+    lambda: |-
+      // Title
+      it.print(0, 0, id(roboto_small), "DOSING TANK");
+
+      // Draw a line separator
+      it.line(0, 12, 128, 12);
+
+      // Water level in gallons (large, centered)
+      if (id(water_level_gallons).has_state()) {
+        it.printf(40, 24, id(roboto_large), TextAlign::CENTER, "%.1f gal", id(water_level_gallons).state);
+      }
+
+      // Percentage readout next to gallons
+      if (id(water_level_percent).has_state()) {
+        it.printf(100, 32, id(roboto_medium), TextAlign::CENTER, "%.0f%%", id(water_level_percent).state);
+      }
+
+      // Percentage bar at bottom
+      it.rectangle(0, 54, 128, 8);
+
+      // Percentage fill (proportional width)
+      if (id(water_level_percent).has_state()) {
+        float percent = id(water_level_percent).state;
+        int bar_width = (int)(percent * 1.28);  // 128 pixels * percent/100
+        it.filled_rectangle(0, 54, bar_width, 8);
+      }
+
+# Example configuration entry for ultrasonic sensor
 sensor:
   - platform: ultrasonic
+    #name: "Ultrasonic Sensor"
     id: distance
-    trigger_pin: D1
-    echo_pin: D2
+    trigger_pin: D5
+    echo_pin: D6
     update_interval: 1s
     pulse_time: 10us
     timeout: 6m
     filters:
-      # Clamp filter - constrains values to expected physical range (meters)
-      # Tank range: 0.12m (empty, 4.7in) to 0.37m (full, 14.5in)
+      # Clamp filter first - constrains values to expected physical range (meters)
       - clamp:
           min_value: 0.12
           max_value: 0.37
           ignore_out_of_range: true
-
-      # Smart outlier rejection - rejects readings >30% different from last valid value
-      # Prevents sensor spikes from reaching downstream calculations
+      # Smart outlier rejection: rejects readings >20% different from last valid value
       - lambda: |-
           static float last_valid = NAN;
 
@@ -62,17 +170,17 @@ sensor:
             last_valid = x;
             return x;
           } else {
-            // Check if reading is within 30% of last valid value
+            // Check if reading is within 20% of last valid value
             float percent_diff = fabs(x - last_valid) / last_valid * 100.0;
-            if (percent_diff <= 30.0) {
+            if (percent_diff <= 20.0) {
               last_valid = x;
               return x;
             }
           }
 
-          return last_valid;  // Return last valid value if outlier detected
+          return last_valid;  // Return last valid value instead of empty
 
-  # Convert meters to inches
+  # this is a template function to convert meters to inches
   - platform: template
     name: "distance_inches"
     unit_of_measurement: "in"
@@ -80,11 +188,10 @@ sensor:
       return (id(distance).state) * 39.3701;
     update_interval: 1s
 
-  # Calculate gallons based on distance
-  # Calibration points: 13.5in = empty (0 gal), 5.2in = full (10 gal)
+  # Calculate gallons based on distance (inches)
   - platform: template
     name: "water_level_gallons"
-    id: water_level_gallons
+    id: water_level_gallons  # Add this ID
     unit_of_measurement: "gal"
     accuracy_decimals: 1
     lambda: |-
@@ -98,6 +205,7 @@ sensor:
   # Calculate percentage full (0-100%)
   - platform: template
     name: "water_level_percent"
+    id: water_level_percent
     unit_of_measurement: "%"
     accuracy_decimals: 0
     lambda: |-
