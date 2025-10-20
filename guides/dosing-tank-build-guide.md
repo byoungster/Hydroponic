@@ -27,15 +27,17 @@ This project creates an affordable, WiFi-connected water level monitor for hydro
 
 ## Wiring Diagram
 
-### Ultrasonic Sensor to D1 Mini
+### A02YYUW Ultrasonic Sensor to D1 Mini
+
+Wire colors: Red (Pin 1), Black (Pin 2), Yellow (Pin 3), White (Pin 4)
 
 ```
-Ultrasonic Sensor          D1 Mini
-─────────────────          ───────
-VCC (Red)          ───→    5V
-GND (Black)        ───→    GND
-TRIG (Yellow)      ───→    D5 (GPIO14)
-ECHO (Green)       ───→    D6 (GPIO12)
+A02YYUW Sensor            D1 Mini
+──────────────            ───────
+Red (VCC)          ───→   5V
+Black (GND)        ───→   GND
+Yellow (RX)        ───→   D3 (GPIO0)
+White (TX)         ───→   D4 (GPIO2)
 ```
 
 ### OLED Display to D1 Mini (I2C)
@@ -43,10 +45,10 @@ ECHO (Green)       ───→    D6 (GPIO12)
 ```
 OLED Display              D1 Mini
 ────────────              ───────
-VCC                ───→   3.3V
+VCC                ───→   5V
 GND                ───→   GND
-SDA                ───→   D3 (GPIO0)
-SCL                ───→   D4 (GPIO2)
+SDA                ───→   D2 (GPIO4)
+SCL                ───→   D1 (GPIO5)
 ```
 
 ### Complete Wiring Summary
@@ -54,13 +56,12 @@ SCL                ───→   D4 (GPIO2)
 ```
 D1 Mini Pin        Connected To
 ───────────        ────────────
-5V                 Ultrasonic VCC
-3.3V               OLED VCC
-GND                Ultrasonic GND + OLED GND (common ground)
-D3 (GPIO0)         OLED SDA
-D4 (GPIO2)         OLED SCL
-D5 (GPIO14)        Ultrasonic TRIG
-D6 (GPIO12)        Ultrasonic ECHO
+5V                 A02YYUW Red (VCC) + OLED VCC
+GND                A02YYUW Black (GND) + OLED GND (common ground)
+D1 (GPIO5)         OLED SCL
+D2 (GPIO4)         OLED SDA
+D3 (GPIO0)         A02YYUW Yellow (RX)
+D4 (GPIO2)         A02YYUW White (TX)
 ```
 
 ## Software Setup
@@ -215,8 +216,8 @@ automation:
 
 ### Sensor Reading "Unknown" or "NaN"
 
-- **Check wiring:** Verify TRIG on D5, ECHO on D6
-- **Power issue:** Confirm 5V connected to ultrasonic sensor
+- **Check wiring:** Verify Yellow wire (RX) on D3, White wire (TX) on D4
+- **Power issue:** Confirm 5V connected to Red wire (VCC)
 - **Out of range:** Ensure water level is within sensor's detection range (0.12m to 0.37m)
 
 ### WiFi Connection Issues

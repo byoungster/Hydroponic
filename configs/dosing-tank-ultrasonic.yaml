@@ -29,11 +29,12 @@
 #
 # Wiring Connections:
 # -------------------
-# Ultrasonic Sensor to D1 Mini:
-#   - Sensor VCC    -> D1 Mini 5V
-#   - Sensor GND    -> D1 Mini GND
-#   - Sensor TRIG   -> D1 Mini D3 (GPIO0)
-#   - Sensor ECHO   -> D1 Mini D4 (GPIO2)
+# A02YYUW Ultrasonic Sensor to D1 Mini:
+# Wire Colors: Red (Pin 1), Black (Pin 2), Yellow (Pin 3), White (Pin 4)
+#   - Red (VCC)     -> D1 Mini 5V
+#   - Black (GND)   -> D1 Mini GND
+#   - Yellow (RX)   -> D1 Mini D3 (GPIO0)
+#   - White (TX)    -> D1 Mini D4 (GPIO2)
 #
 # OLED Display to D1 Mini (I2C):
 #   - OLED VCC      -> D1 Mini 5V
