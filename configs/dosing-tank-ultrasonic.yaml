@@ -33,14 +33,14 @@
 # Wire Colors: Red (Pin 1), Black (Pin 2), Yellow (Pin 3), White (Pin 4)
 #   - Red (VCC)     -> D1 Mini 5V
 #   - Black (GND)   -> D1 Mini GND
-#   - Yellow (RX)   -> D1 Mini D3 (GPIO0)
-#   - White (TX)    -> D1 Mini D4 (GPIO2)
+#   - Yellow (RX)   -> D1 Mini D1 (GPIO5)
+#   - White (TX)    -> D1 Mini D2 (GPIO4)
 #
 # OLED Display to D1 Mini (I2C):
 #   - OLED VCC      -> D1 Mini 5V
 #   - OLED GND      -> D1 Mini GND
-#   - OLED SDA      -> D1 Mini D2 (GPIO4)
-#   - OLED SCL      -> D1 Mini D1 (GPIO5)
+#   - OLED SDA      -> D1 Mini D3 (GPIO0)
+#   - OLED SCL      -> D1 Mini D4 (GPIO2)
 #
 # Tank Configuration:
 # -------------------
@@ -88,8 +88,8 @@ captive_portal:
 
 # I2C configuration for the OLED display
 i2c:
-  sda: D2
-  scl: D1
+  sda: D3
+  scl: D4
   frequency: 400kHz
   scan: true
   id: bus_a
@@ -151,8 +151,8 @@ sensor:
   - platform: ultrasonic
     #name: "Ultrasonic Sensor"
     id: distance
-    trigger_pin: D3
-    echo_pin: D4
+    trigger_pin: D1
+    echo_pin: D2
     update_interval: 1s
     pulse_time: 10us
     timeout: 6m

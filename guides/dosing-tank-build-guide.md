@@ -36,8 +36,8 @@ A02YYUW Sensor            D1 Mini
 ──────────────            ───────
 Red (VCC)          ───→   5V
 Black (GND)        ───→   GND
-Yellow (RX)        ───→   D3 (GPIO0)
-White (TX)         ───→   D4 (GPIO2)
+Yellow (RX)        ───→   D1 (GPIO5)
+White (TX)         ───→   D2 (GPIO4)
 ```
 
 ### OLED Display to D1 Mini (I2C)
@@ -47,8 +47,8 @@ OLED Display              D1 Mini
 ────────────              ───────
 VCC                ───→   5V
 GND                ───→   GND
-SDA                ───→   D2 (GPIO4)
-SCL                ───→   D1 (GPIO5)
+SDA                ───→   D3 (GPIO0)
+SCL                ───→   D4 (GPIO2)
 ```
 
 ### Complete Wiring Summary
@@ -58,10 +58,10 @@ D1 Mini Pin        Connected To
 ───────────        ────────────
 5V                 A02YYUW Red (VCC) + OLED VCC
 GND                A02YYUW Black (GND) + OLED GND (common ground)
-D1 (GPIO5)         OLED SCL
-D2 (GPIO4)         OLED SDA
-D3 (GPIO0)         A02YYUW Yellow (RX)
-D4 (GPIO2)         A02YYUW White (TX)
+D1 (GPIO5)         A02YYUW Yellow (RX)
+D2 (GPIO4)         A02YYUW White (TX)
+D3 (GPIO0)         OLED SDA
+D4 (GPIO2)         OLED SCL
 ```
 
 ## Software Setup
@@ -108,7 +108,21 @@ wifi_password_iot: "Your_WiFi_Password"
 4. Select the COM port for your D1 Mini
 5. Wait for compilation and upload (takes 3-5 minutes first time)
 
-### Step 4: Verify Operation
+### Step 4: Flash and Initial Boot
+
+**IMPORTANT: First Boot Workaround for I2C "SDA held low" Error**
+
+If you encounter I2C bus errors during initial flash, use this procedure:
+
+1. **Disconnect OLED** - Remove all 4 OLED wires from D1 Mini before flashing
+2. **Flash firmware** - Connect D1 Mini via USB and flash the firmware
+3. **Wait for boot** - Let the device fully boot and connect to WiFi
+4. **Power off** - Disconnect USB power
+5. **Connect OLED** - Wire up the OLED display (VCC→5V, GND→GND, SDA→D3, SCL→D4)
+6. **Power on and reboot** - Reconnect USB power and let device boot
+7. **Verify operation** - OLED should now display "DOSING TANK" and sensor readings
+
+### Step 5: Verify Operation
 
 1. Check ESPHome logs to confirm WiFi connection
 2. Verify OLED display shows "DOSING TANK" and sensor readings
@@ -212,11 +226,20 @@ automation:
 
 - **Blank screen:** Check I2C address (should be 0x3C). Try running I2C scan in ESPHome logs
 - **Wrong address:** Update `address:` in display configuration
-- **No power:** Verify 3.3V connection (NOT 5V - may damage OLED)
+- **No power:** Verify 5V connection to OLED VCC
+- **SDA held low error on first boot:** Use the workaround procedure in Step 4:
+  1. Disconnect OLED completely
+  2. Flash firmware and let device boot
+  3. Power off, connect OLED, then power on again
+- **Still having issues:**
+  - Try a different OLED from your 6-pack (one may be defective)
+  - Check for loose connections on D3 (SDA) and D4 (SCL)
+  - Verify no short circuits between pins
+  - Some OLEDs require 3.3V instead of 5V - try connecting VCC to 3.3V pin
 
 ### Sensor Reading "Unknown" or "NaN"
 
-- **Check wiring:** Verify Yellow wire (RX) on D3, White wire (TX) on D4
+- **Check wiring:** Verify Yellow wire (RX) on D1, White wire (TX) on D2
 - **Power issue:** Confirm 5V connected to Red wire (VCC)
 - **Out of range:** Ensure water level is within sensor's detection range (0.12m to 0.37m)
 
@@ -238,6 +261,19 @@ automation:
 ### Adjusting Update Intervals
 
 Change `update_interval: 1s` to update less frequently (e.g., `5s` or `10s`) to reduce processing load.
+
+### Changing I2C Frequency
+
+The default configuration uses 400kHz for fast communication. If experiencing I2C errors with certain displays, you can slow it down:
+
+```yaml
+i2c:
+  sda: D3
+  scl: D4
+  frequency: 100kHz  # Slower, more compatible with problematic displays
+  scan: true
+  id: bus_a
+```
 
 ### Customizing OLED Display
 
